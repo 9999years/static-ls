@@ -14,6 +14,7 @@ version: 0.1.0
 build-type: Simple
 
 dependencies:
+  - aeson >= 2.1.0.0 && < 2.2
   - array >= 0.5.4 && < 0.6
   - base >= 4.17.0 && < 4.19
   - containers >= 0.6.0 && < 0.7
@@ -43,6 +44,7 @@ ghc-options:
   - -Werror=deferred-out-of-scope-variables
   - -fno-defer-typed-holes
 default-extensions:
+- DisambiguateRecordFields
 - FlexibleContexts
 - OverloadedRecordDot
 - OverloadedStrings
