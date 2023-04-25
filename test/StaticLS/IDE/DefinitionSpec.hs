@@ -25,7 +25,7 @@ spec =
                     let emptyOpts =
                             StaticEnvOptions
                                 { optionHieDbPath = Nothing
-                                , optionHieFilesPath = Just ".hiefiles"
+                                , optionHieFilesPath = Just (Test.hieDirGhcVer Test.ghcVerDir)
                                 }
                     staticEnv <- Test.initStaticEnvOpts emptyOpts
                     locs <- runStaticLs staticEnv $ uncurry getDefinition Test.myFunRef1TdiAndPosition

@@ -11,8 +11,14 @@ spec :: Spec
 spec =
     describe "Correctly retrieves hover information" $ do
         describe "All available sources" $ do
-            it "retrieves the myFun definition from a different module" $ do
+            it "retrieves the myFun hover info from a different module" $ do
                 staticEnv <- Test.initStaticEnv
                 mHoverInfo <- runStaticLs staticEnv $ uncurry retrieveHover Test.myFunRef1TdiAndPosition
                 _ <- Test.assertJust "no definition loc found" mHoverInfo
+                pure ()
+
+            it "Fails to retrieve myFun hover info on a different version" $ do
+                staticEnv <- Test.initStaticEnvOpts Test.badGhcTestStaticEnvOptions
+                mHoverInfo <- runStaticLs staticEnv $ uncurry retrieveHover Test.myFunRef1TdiAndPosition
+                mHoverInfo `shouldBe` Nothing
                 pure ()

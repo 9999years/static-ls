@@ -3,6 +3,7 @@ module StaticLS.HIE.FileSpec (spec) where
 import Control.Monad.Trans.Except (runExceptT)
 import Control.Monad.Trans.Maybe (runMaybeT)
 import StaticLS.HIE.File
+import StaticLS.HIE.File.Except
 import StaticLS.StaticEnv
 import StaticLS.StaticEnv.Options
 import System.Directory
@@ -23,9 +24,8 @@ spec = do
                             srcFilePathToHieFilePath "src/StaticLS/HIE/File.hs"
                 let relativeHieFile = makeRelative staticEnv.wsRoot <$> hieFile
                 hieFileExists <- maybe (pure False) doesFileExist relativeHieFile
-                print $ Test.ghcVerDir
 
-                relativeHieFile `shouldBe` Just ("test/TestData/" </> Test.ghcVerDir </> ".hiefiles/StaticLS/HIE/File.hie")
+                relativeHieFile `shouldBe` Just (Test.hieDirGhcVer Test.ghcVerDir </> "StaticLS/HIE/File.hie")
                 hieFileExists `shouldBe` True
 
             it "returns a valid hie file when called on a test/ file" $ do
@@ -37,7 +37,7 @@ spec = do
                 let relativeHieFile = makeRelative staticEnv.wsRoot <$> hieFile
                 hieFileExists <- maybe (pure False) doesFileExist relativeHieFile
 
-                relativeHieFile `shouldBe` Just ("test/TestData/" </> Test.ghcVerDir </> ".hiefiles/TestData/Mod1.hie")
+                relativeHieFile `shouldBe` Just (Test.hieDirGhcVer Test.ghcVerDir </> "TestData/Mod1.hie")
                 hieFileExists `shouldBe` True
 
     describe "getHieFile" $ do
@@ -46,7 +46,7 @@ spec = do
             hieFile <-
                 runStaticLs staticEnv $
                     runExceptT $
-                        getHieFile ("test/TestData/" </> Test.ghcVerDir </> ".hiefiles/TestData/Mod1.hie")
+                        getHieFile (Test.hieDirGhcVer Test.ghcVerDir </> "TestData/Mod1.hie")
             _ <- Test.assertRight "expected succesful read" hieFile
             pure ()
 
@@ -60,6 +60,7 @@ spec = do
             hieFile <-
                 runStaticLs staticEnv $
                     runExceptT $
+                        -- This is a src file not an hie file!
                         getHieFile "./test/TestData/Mod1.hs"
             _ <- Test.assertLeft "expected failure" hieFile
             pure ()
@@ -76,4 +77,13 @@ spec = do
                     runExceptT $
                         getHieFile ""
             _ <- Test.assertLeft "expected failure" hieFile
+            pure ()
+
+        it "returns an appropriate error for a version mismatch" $ do
+            staticEnv <- Test.initStaticEnvOpts Test.badGhcTestStaticEnvOptions
+            hieFile <-
+                runStaticLs staticEnv $
+                    runExceptT $
+                        getHieFile (Test.hiedbDirGhcVer Test.notGhcVerDir </> "TestData/Mod1.hie")
+            err <- Test.assertLeft "expected failure" hieFile
             pure ()
