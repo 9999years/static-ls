@@ -86,4 +86,7 @@ spec = do
                     runExceptT $
                         getHieFile (Test.hiedbDirGhcVer Test.notGhcVerDir </> "TestData/Mod1.hie")
             err <- Test.assertLeft "expected failure" hieFile
+            let isHieFileVersionException (HieFileVersionException{}) = True
+                isHieFileVersionException _ = False
+            isHieFileVersionException err `shouldBe` True
             pure ()

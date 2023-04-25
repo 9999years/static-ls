@@ -1,7 +1,9 @@
 module StaticLS.IDE.HoverSpec where
 
+import StaticLS.HIE.File.Except
 import StaticLS.IDE.Hover
 import StaticLS.StaticEnv
+import StaticLS.StaticEnv.Options
 import Test.Hspec
 import qualified TestImport as Test
 import qualified TestImport.Assert as Test
@@ -18,8 +20,22 @@ spec =
                 _ <- Test.assertJust "error getting over" mHoverInfo
                 pure ()
 
-            it "Fails to retrieve myFun hover info on a different version" $ do
+            it "Returns a renderable err when there is a version mismatch" $ do
                 staticEnv <- Test.initStaticEnvOpts Test.badGhcTestStaticEnvOptions
                 eHoverInfo <- runStaticLs staticEnv $ uncurry retrieveHover Test.myFunRef1TdiAndPosition
-                Test.assertLeft "expected hie hover failure" eHoverInfo
+                hoverErr <- Test.assertLeft "expected hie hover failure" eHoverInfo
+                let isHieFileVersionException (HieFileVersionException{}) = True
+                    isHieFileVersionException _ = False
+                isHieFileVersionException hoverErr `shouldBe` True
                 pure ()
+
+        describe "Missing sources" $ do
+            it "does not crash with missing all sources" $ do
+                let emptyOpts =
+                        StaticEnvOptions
+                            { optionHieDbPath = Nothing
+                            , optionHieFilesPath = Nothing
+                            }
+                staticEnv <- Test.initStaticEnvOpts emptyOpts
+                locs <- runStaticLs staticEnv $ uncurry retrieveHover Test.myFunRef1TdiAndPosition
+                locs `shouldBe` Right Nothing
